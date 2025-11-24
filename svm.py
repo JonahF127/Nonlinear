@@ -94,6 +94,8 @@ def flagged_words_count(email):
         "subscription",
         "subscribe",
         "sex",
+        "award",
+        "awarded"
         ]
     
     # Compare the email with flagged_words
@@ -152,7 +154,7 @@ def count_digits(email):
 # function to count number of (specified) special characters in an email
 def count_specials(email):
     # remove all white spaces
-    no_whitespace = "".join(text.split())
+    no_whitespace = "".join(email.split())
 
     # Make list of flagged special characters
     flagged_specials = [
@@ -175,11 +177,8 @@ def count_specials(email):
 
 # check how many times email includes a link
 def count_links(email):
-    # remove all punctuation from the email
-    text = email.translate(str.maketrans('', '', string.punctuation))
-
     # get list of words
-    words = text.split()
+    words = email.split()
 
     # find number of links
     links = 0
@@ -192,10 +191,22 @@ def count_links(email):
     ]
     
     for word in words:
-        if "www" in word:
-            links += 1
+        for link_end in link_ends:
+            if link_end in word:
+                links += 1
+                break
 
     return links
+
+
+# check how many times the word free appears in email
+def free_count(email):
+    # remove all punctuation from the email
+    text = email.translate(str.maketrans('', '', string.punctuation))
+
+    lowercase_text = text.lower()
+    frees = lowercase_text.count("free")
+    return frees
 
 
 def main():
@@ -229,6 +240,13 @@ def main():
 
     # create column for counting number of links in email
     emails["links_count"] = emails["Message"].apply(count_links)
+
+    # create column for counting number of times word "free" appears
+    emails["free_count"] = emails["Message"].apply(free_count)
+
+    # create column for counting number of special characters (@, /)
+    emails["special_count"] = emails["Message"].apply(count_specials)
+
 
 
     # save dataframe to new csv

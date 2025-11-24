@@ -183,6 +183,14 @@ def count_links(email):
 
     # find number of links
     links = 0
+    link_ends = [
+        "www.",
+        ".com",
+        ".co",
+        ".uk",
+        ".net"
+    ]
+    
     for word in words:
         if "www" in word:
             links += 1

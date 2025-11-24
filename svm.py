@@ -41,9 +41,26 @@ def unique_word_count(email):
     # return number of unique words
     return len(words)
 
-# function to count total characters in the email (including spaces and punctuation)
+# function to count total characters in the email
 def character_count(email):
     return len(email)
+
+# function to count number of letter characters in the email
+def letter_character_count(email):
+    # remove punctuation
+    text = email.translate(str.maketrans('', '', string.punctuation))
+
+    # remove spaces and newlines/tabs
+    text = text.replace(" ", "").replace("\n", "").replace("\t", "")
+
+    # keep only alphabetic characters
+    letters_only = ""
+    for ch in text:
+        if ch.isalpha():
+            letters_only += ch
+
+    # return number of letters
+    return len(letters_only)
 
 def flagged_words_count(email):
     # remove punctuation from email

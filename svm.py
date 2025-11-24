@@ -40,6 +40,56 @@ def unique_word_count(email):
 
     # return number of unique words
     return len(words)
+
+def flagged_words_count(email):
+    # remove punctuation from email
+    text = email.translate(str.maketrans('', '', string.punctuation))
+    
+    # make text lowercase
+    lowercase_text = text.lower()
+
+    # Make the list of common words in spam
+    flagged_words = [
+        "free",
+        "new",
+        "now",
+        "immediately",
+        "urgent",
+        "final",
+        "premium",
+        "win",
+        "money",
+        "offer",
+        "prize",
+        "click",
+        "text",
+        "txt",
+        "call",
+        "subscription",
+        "subscribe"
+        ]
+    
+    # Compare the email with flagged_words (To Do)
+
+def flagged_bigrams_count(email):
+    # remove punctuation from email
+    text = email.translate(str.maketrans('', '', string.punctuation))
+    
+    # make text lowercase
+    lowercase_text = text.lower()
+
+    # make the list of common bigrams in spam
+    flagged_bigrams = [
+        "click here",
+        "limited time",
+        "act now",
+        "Have won"
+    ]
+
+    # Compare the email with flagged_bigrams (To Do)
+
+    
+
     
 
 

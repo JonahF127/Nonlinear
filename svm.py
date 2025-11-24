@@ -83,6 +83,7 @@ def flagged_words_count(email):
         "final",
         "premium",
         "win",
+        "won",
         "money",
         "offer",
         "prize",
@@ -91,7 +92,8 @@ def flagged_words_count(email):
         "txt",
         "call",
         "subscription",
-        "subscribe"
+        "subscribe",
+        "sex",
         ]
     
     # Compare the email with flagged_words
@@ -147,6 +149,29 @@ def count_digits(email):
     return digit_count
 
 
+# function to count number of (specified) special characters in an email
+def count_specials(email):
+    # remove all white spaces
+    no_whitespace = "".join(text.split())
+
+    # Make list of flagged special characters
+    flagged_specials = [
+        "/",
+        "@",
+    ]
+    
+    # Count the number of flagged specials
+    special_count = 0
+    for ch in no_whitespace:
+        if not(ch.isalpha()) and not(ch.isdigit()):
+                for special in flagged_specials:
+                    if ch == special:
+                        special_count += 1
+            
+
+    return special_count
+
+
 
 # check how many times email includes a link
 def count_links(email):
@@ -161,7 +186,7 @@ def count_links(email):
     for word in words:
         if "www" in word:
             links += 1
-    
+
     return links
 
 

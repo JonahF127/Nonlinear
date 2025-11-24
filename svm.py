@@ -129,11 +129,40 @@ def flagged_bigrams_count(email):
     
 
     
+# function to count number of digits in an email
+def count_digits(email):
+    # remove all punctuation from the email
+    text = email.translate(str.maketrans('', '', string.punctuation))
+    
+
+    # remove all white spaces
+    no_whitespace = "".join(text.split())
+
+    # count number of digits
+    digit_count = 0
+    for ch in no_whitespace:
+        if ch.isdigit():
+            digit_count += 1
+
+    return digit_count
 
 
 
+# check how many times email includes a link
+def count_links(email):
+    # remove all punctuation from the email
+    text = email.translate(str.maketrans('', '', string.punctuation))
 
+    # get list of words
+    words = text.split()
 
+    # find number of links
+    links = 0
+    for word in words:
+        if "www" in word:
+            links += 1
+    
+    return links
 
 
 def main():
@@ -161,6 +190,12 @@ def main():
 
     # create column for number of flagged bigrams in email
     emails["flagged_bigrams_count"] = emails["Message"].apply(flagged_bigrams_count)
+
+    # create column for counting number of digits in email
+    emails["digit_count"] = emails["Message"].apply(count_digits)
+
+    # create column for counting number of links in email
+    emails["links_count"] = emails["Message"].apply(count_links)
 
 
     # save dataframe to new csv

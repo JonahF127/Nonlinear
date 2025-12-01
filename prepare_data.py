@@ -10,22 +10,35 @@ def load_email_data(csv_path: str = "email_data.csv") -> pd.DataFrame:
     return df
 
 
-def encode_labels(df: pd.DataFrame) -> np.ndarray:
+def encode_labels(df: pd.DataFrame):
     """
-    Convert the Category column into numeric labels:
+    Clean and encode the Category column into numeric labels:
       ham  -> +1
       spam -> -1
+    Returns:
+        df_clean: dataframe with only valid Category rows
+        labels:  numpy array of labels (+1, -1)
     """
-    label_map = {"ham": 1, "spam": -1}
     if "Category" not in df.columns:
         raise ValueError("Expected a 'Category' column in the dataframe.")
 
-    labels = df["Category"].map(label_map)
-    if labels.isnull().any():
-        bad_values = df["Category"][labels.isnull()].unique()
-        raise ValueError(f"Unrecognized Category values: {bad_values}")
+    # Normalize category strings: lower-case, strip whitespace
+    cats = df["Category"].astype(str).str.strip().str.lower()
 
-    return labels.to_numpy(dtype=float)
+    # Keep only rows that are exactly 'ham' or 'spam'
+    valid_mask = cats.isin(["ham", "spam"])
+    bad_values = cats[~valid_mask].unique()
+
+    if len(bad_values) > 0:
+        print("Warning: Dropping rows with unrecognized Category values:", bad_values)
+
+    df_clean = df[valid_mask].copy()
+    cats_clean = cats[valid_mask]
+
+    label_map = {"ham": 1, "spam": -1}
+    labels = cats_clean.map(label_map).to_numpy(dtype=float)
+
+    return df_clean, labels
 
 
 def build_feature_matrix(df: pd.DataFrame) -> np.ndarray:
@@ -89,17 +102,19 @@ def prepare_datasets(csv_path: str = "email_data.csv"):
     """
     High-level helper:
       1. Load email_data.csv
-      2. Encode labels
+      2. Clean and encode labels
       3. Build feature matrix
       4. Split into train/test (75%/25%)
     Returns: X_train, X_test, y_train, y_test
     """
     df = load_email_data(csv_path)
-    y = encode_labels(df)
-    X = build_feature_matrix(df)
+
+    # encode_labels now returns a cleaned df and label array
+    df_clean, y = encode_labels(df)
+
+    X = build_feature_matrix(df_clean)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     return X_train, X_test, y_train, y_test
-
 
 if __name__ == "__main__":
     # Simple sanity check

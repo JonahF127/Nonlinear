@@ -63,6 +63,11 @@ def build_feature_matrix(df: pd.DataFrame) -> np.ndarray:
     for col in feature_cols:
         if col not in df.columns:
             raise ValueError(f"Expected feature column '{col}' not found in dataframe.")
+        # scale data with min-max normalization
+        min = df[col].min()
+        max = df[col].max()
+        if max != min:
+            df[col] = (df[col] - min) / (max - min)
 
     X = df[feature_cols].to_numpy(dtype=float)
     return X

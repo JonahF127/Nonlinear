@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+
 def load_email_data(csv_path: str = "email_data.csv") -> pd.DataFrame:
     """
     Load the engineered email dataset (output of svm.py).
@@ -44,7 +45,21 @@ def encode_labels(df: pd.DataFrame):
 def build_feature_matrix(df: pd.DataFrame) -> np.ndarray:
     """
     Extract the numeric feature matrix X from the dataframe.
-    These columns must match the ones created in svm.py.
+    These columns must match the ones created in add_features.py. For analysis purposes, the data points are numbered below
+        List of Data Points
+        0) Category (spam/ham)
+        0) Message
+        1) word_count
+        2) uppercase_word_count
+        3) unique_word_count
+        4) character_count
+        5) letter_count
+        6) flagged_word_count
+        7) flagged_bigrams_count
+        8) digit_count
+        9) links_count
+        10) free_count
+        11) special_count
     """
     feature_cols = [
         "word_count",

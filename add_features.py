@@ -44,7 +44,7 @@ def unique_word_count(email):
 
 # function to count total characters in the email
 def character_count(email):
-    return len(email)
+    return int(len(email) / 4)
 
 
 # function to count number of letter characters in the email
@@ -62,7 +62,7 @@ def letter_character_count(email):
             letters_only += ch
 
     # return number of letters
-    return len(letters_only)
+    return int(len(letters_only) / 4)
 
 
 # function to count number of flagged words in an email

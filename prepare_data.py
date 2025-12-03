@@ -3,6 +3,7 @@ import pandas as pd
 import gurobipy as gp
 from gurobipy import GRB
 import sys
+import csv
 
 
 def load_email_data(csv_path: str = "email_data.csv") -> pd.DataFrame:
@@ -321,4 +322,21 @@ if __name__ == "__main__":
     accuracy = calculate_accuracy(predictions, y_test)
     print(accuracy)
     create_confusion_matrix_csv(predictions, y_test, "results.csv")
+
+   
+
+    solution_vars = [] 
+    for key in optimal_values:
+        if "A" in key or key == "B":
+            solution_vars.append(key)
+
+    solution_dict = {key: optimal_values[key] for key in solution_vars}
+    print(solution_dict)
+
+    solution_data = [solution_dict]
+
+    with open("solution.csv", mode = "w", newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=solution_vars)
+        writer.writeheader()
+        writer.writerows(solution_data)
 

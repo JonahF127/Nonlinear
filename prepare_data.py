@@ -271,8 +271,6 @@ def predict(X_test, optimal_values):
 # calculate accuracy
 def calculate_accuracy(predictions, y_test):
     were_correct = predictions == y_test
-    for pred in predictions:
-        print(pred)
     num_correct = sum(were_correct)
     accuracy = num_correct / len(predictions)
     return accuracy

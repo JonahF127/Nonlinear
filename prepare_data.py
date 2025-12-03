@@ -75,6 +75,7 @@ def build_feature_matrix(df: pd.DataFrame) -> np.ndarray:
         "special_count"
     ]
 
+    
     for col in feature_cols:
         if col not in df.columns:
             raise ValueError(f"Expected feature column '{col}' not found in dataframe.")
@@ -118,6 +119,13 @@ def train_test_split(
     return X_train, X_test, y_train, y_test
 
 
+
+    
+    
+
+    
+
+
 def prepare_datasets(csv_path: str = "email_data.csv"):
     """
     High-level helper:
@@ -136,6 +144,86 @@ def prepare_datasets(csv_path: str = "email_data.csv"):
     X_train, X_test, y_train, y_test = train_test_split(X, y)
     return X_train, X_test, y_train, y_test
 
+
+
+
+# function to create the lp file for gurobi
+def create_lp_file(X_train, y_train):
+    # separate between spam and ham emails
+    X_train_spam = []
+    y_train_spam = []
+    X_train_ham =  [] 
+    y_train_ham = []
+    for i in range(y_train.shape[0]):
+        if y_train[i] == -1:
+            y_train_spam.append(y_train[i])
+            X_train_spam.append(X_train[i])
+        else:
+            y_train_ham.append(y_train[i])
+            X_train_ham.append(X_train[i])
+
+    print(len(X_train_spam[1]))
+    
+    spam_obj_coefficients = [] 
+    for i in range(len(X_train_spam)):
+        spam_obj_coefficients.append(1 / len(X_train_spam))
+
+    ham_obj_coefficients = []
+    for i in range(len(X_train_ham)):
+        ham_obj_coefficients.append(1 / len(X_train_ham))
+
+    with open("hyperplane.lp", "w") as f:
+        f.write("minimize \n")
+        # write the objective function
+        for i in range(len(spam_obj_coefficients)):
+            f.write(f" + {spam_obj_coefficients[i]} Y{i+1}")
+        
+        f.write("\n")
+
+        for i in range(len(ham_obj_coefficients)):
+            f.write(f" + {ham_obj_coefficients[i]} Z{i+1}")
+        
+        f.write("\n")
+
+        for i in range(X_train.shape[1]):
+            f.write(f" + 0A{i+1}")
+        f.write(" + 0B")
+
+        # write constraints
+        f.write("\n subject to\n")
+
+        for i in range(len(X_train_spam)):
+            f.write(f" Y{i+1}")
+            for j in range(X_train.shape[1]):
+                f.write(f" + {X_train_spam[i][j]} A{j+1}")
+            f.write(" - B >= 1\n")
+        
+
+        for i in range(len(X_train_ham)):
+            f.write(f" Z{i+1}")
+            for j in range(X_train.shape[1]):
+                f.write(f" - {X_train_ham[i][j]} A{j+1}")
+            f.write(" + B >= 1\n")
+
+        # write bounds 
+        f.write("bounds\n")
+        for i in range(len(X_train_spam)):
+            f.write(f" Y{i+1} >= 0\n")
+        
+        for i in range(len(X_train_ham)):
+            f.write(f" Z{i+1} >= 0\n")
+        
+        for i in range(X_train.shape[1]):
+            f.write(f" A{i+1} >= -Inf\n")
+        
+        f.write(" B >= -Inf\n")
+        f.write("end")
+
+        
+
+
+
+
 if __name__ == "__main__":
     # Simple sanity check
     X_train, X_test, y_train, y_test = prepare_datasets()
@@ -143,3 +231,4 @@ if __name__ == "__main__":
     print("X_test shape:", X_test.shape)
     print("y_train shape:", y_train.shape)
     print("y_test shape:", y_test.shape)
+    create_lp_file(X_train, y_train)

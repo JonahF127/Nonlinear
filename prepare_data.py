@@ -276,6 +276,34 @@ def calculate_accuracy(predictions, y_test):
     return accuracy
 
 
+# create confusion matrix
+def create_confusion_matrix_csv(predictions, y_test, output_filename):
+    labels = y_test.tolist()
+    labels = list(set(labels))
+    matrix = np.zeros((len(labels), len(labels)), dtype=int)
+
+    for actual, predicted in zip(y_test, predictions):
+        actual_idx = labels.index(actual)
+        predicted_idx = labels.index(predicted)
+        matrix[actual_idx, predicted_idx] += 1
+    
+    for i in range(len(labels)):
+        if labels[i] == -1:
+            labels[i] = "spam"
+        else:
+            labels[i] = "ham"
+    
+    labels = sorted(labels)
+
+    with open(output_filename, "w") as f:
+        f.write(",".join(labels) + ",\n")
+
+        for i, actual_label in enumerate(labels):
+            row_counts = [str(count) for count in matrix[i]]
+            f.write(",".join(row_counts) + f",{actual_label}\n")
+
+
+
 
 
 
@@ -292,4 +320,5 @@ if __name__ == "__main__":
     predictions = predict(X_test, optimal_values)
     accuracy = calculate_accuracy(predictions, y_test)
     print(accuracy)
+    create_confusion_matrix_csv(predictions, y_test, "results.csv")
 

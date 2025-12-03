@@ -189,31 +189,31 @@ def create_lp_file(X_train, y_train):
         f.write("\n")
 
         for i in range(X_train.shape[1]):
-            f.write(f" + 0A{i+1}")
-        f.write(" + 0B")
+            f.write(f" + 0 A{i+1}")
+        f.write(" + 0 B")
 
         # write constraints
         f.write("\n subject to\n")
 
-        for i in range(len(X_train_spam)):
+        for i in range(len(X_train_ham)):
             f.write(f" Y{i+1}")
             for j in range(X_train.shape[1]):
-                f.write(f" + {X_train_spam[i][j]} A{j+1}")
+                f.write(f" + {X_train_ham[i][j]} A{j+1}")
             f.write(" - B >= 1\n")
         
 
-        for i in range(len(X_train_ham)):
+        for i in range(len(X_train_spam)):
             f.write(f" Z{i+1}")
             for j in range(X_train.shape[1]):
-                f.write(f" - {X_train_ham[i][j]} A{j+1}")
+                f.write(f" - {X_train_spam[i][j]} A{j+1}")
             f.write(" + B >= 1\n")
 
         # write bounds 
         f.write("bounds\n")
-        for i in range(len(X_train_spam)):
+        for i in range(len(X_train_ham)):
             f.write(f" Y{i+1} >= 0\n")
         
-        for i in range(len(X_train_ham)):
+        for i in range(len(X_train_spam)):
             f.write(f" Z{i+1} >= 0\n")
         
         for i in range(X_train.shape[1]):
@@ -247,6 +247,36 @@ def solve_hyperplane(lp_file_name):
         sys.exit(0)
 
 
+# make predictions
+def predict(X_test, optimal_values):
+    A_values = [] 
+    beta = optimal_values['B']
+    for key, value in optimal_values.items():
+        if "A" in key:
+            A_values.append(value)
+    
+    A_val_array = np.array(A_values)
+
+    predictions = []
+    for vec in X_test:
+        result = np.dot(A_val_array, vec)
+        if result >= beta:
+            predictions.append(1)
+        else:
+            predictions.append(-1)
+
+    return predictions
+
+
+# calculate accuracy
+def calculate_accuracy(predictions, y_test):
+    were_correct = predictions == y_test
+    for pred in predictions:
+        print(pred)
+    num_correct = sum(were_correct)
+    accuracy = num_correct / len(predictions)
+    return accuracy
+
 
 
 
@@ -261,4 +291,7 @@ if __name__ == "__main__":
     print("y_test shape:", y_test.shape)
     create_lp_file(X_train, y_train)
     optimal_values = solve_hyperplane("hyperplane.lp")
-    print(optimal_values)
+    predictions = predict(X_test, optimal_values)
+    accuracy = calculate_accuracy(predictions, y_test)
+    print(accuracy)
+

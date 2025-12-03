@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+import gurobipy as gp
+from gurobipy import GRB
+import sys
 
 
 def load_email_data(csv_path: str = "email_data.csv") -> pd.DataFrame:
@@ -219,7 +222,32 @@ def create_lp_file(X_train, y_train):
         f.write(" B >= -Inf\n")
         f.write("end")
 
-        
+
+# use gurobi to solve hyperplane
+def solve_hyperplane(lp_file_name):
+    model = gp.read(lp_file_name)
+    model.optimize()
+
+
+
+    if model.Status == GRB.INF_OR_UNBD:
+        # Turn presolve off to determine whether model is infeasible
+        # or unbounded
+        model.setParam(GRB.Param.Presolve, 0)
+        model.optimize()
+    
+    if model.Status == GRB.OPTIMAL:
+        # create dictionary for optimal solution
+        optimal_values = {}
+        for var in model.getVars():
+            optimal_values[var.varName] = var.x
+        return optimal_values
+    else:
+        print(f"Optimization was stopped with status {model.Status}")
+        sys.exit(0)
+
+
+
 
 
 
@@ -232,3 +260,5 @@ if __name__ == "__main__":
     print("y_train shape:", y_train.shape)
     print("y_test shape:", y_test.shape)
     create_lp_file(X_train, y_train)
+    optimal_values = solve_hyperplane("hyperplane.lp")
+    print(optimal_values)

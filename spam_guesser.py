@@ -3,7 +3,6 @@ import pandas as pd
 import csv
 import numpy as np
 import add_features
-import prepare_data
 
 st.title("Spam Email Classifier")
 

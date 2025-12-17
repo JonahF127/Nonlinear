@@ -4,6 +4,7 @@ import gurobipy as gp
 from gurobipy import GRB
 import sys
 import csv
+import math
 
 
 def load_email_data(csv_path: str = "email_data.csv") -> pd.DataFrame:
@@ -224,6 +225,104 @@ def create_lp_file(X_train, y_train):
         f.write("end")
 
 
+
+# create lp file for hypersphere
+def create_hypersphere_file(X_train, y_train):
+    # separate between spam and ham emails
+    X_train_spam = []
+    y_train_spam = []
+    X_train_ham =  [] 
+    y_train_ham = []
+    for i in range(y_train.shape[0]):
+        if y_train[i] == -1:
+            y_train_spam.append(y_train[i])
+            X_train_spam.append(X_train[i])
+        else:
+            y_train_ham.append(y_train[i])
+            X_train_ham.append(X_train[i])
+
+    print(len(X_train_spam[1]))
+
+    spam_obj_coefficients = [] 
+    for i in range(len(X_train_spam)):
+        spam_obj_coefficients.append(1 / len(X_train_spam))
+
+    ham_obj_coefficients = []
+    for i in range(len(X_train_ham)):
+        ham_obj_coefficients.append(1 / len(X_train_ham))
+
+    with open("hypersphere.lp", "w") as f:
+        f.write("minimize \n")
+        # write the objective function
+        for i in range(len(spam_obj_coefficients)):
+            f.write(f" + {spam_obj_coefficients[i]} Y{i+1}")
+        
+        f.write("\n")
+
+        for i in range(len(ham_obj_coefficients)):
+            f.write(f" + {ham_obj_coefficients[i]} Z{i+1}")
+        
+        f.write("\n")
+
+        for i in range(math.comb(X_train.shape[1], 2) + (2*X_train.shape[1])):
+            f.write(f" + 0 A{i+1}")
+        f.write(" + 0 B")
+
+
+        # write constraints
+        f.write("\n subject to\n")
+        for i in range(len(X_train_ham)):
+            f.write(f" Y{i+1}")
+            for j in range(X_train.shape[1]):
+                f.write(f" + {X_train_ham[i][j]} A{j+1}")
+            for k in range(X_train.shape[1] + 1, (X_train.shape[1]*2 + 1)):
+                f.write(f" + {(X_train_ham[i][k-12])**2} A{k}")
+            A_counter = 23
+            for j in range(X_train.shape[1]-1):
+                for k in range(j+1, X_train.shape[1]):
+                    f.write(f" + {X_train_ham[i][j]*X_train_ham[i][k]} A{A_counter}")
+                    A_counter += 1
+            f.write(" - B >= 1\n")
+
+        for i in range(len(X_train_spam)):
+            f.write(f" Z{i+1}")
+            for j in range(X_train.shape[1]):
+                f.write(f" - {X_train_spam[i][j]} A{j+1}")
+            for k in range(X_train.shape[1] + 1, (X_train.shape[1]*2 + 1)):
+                f.write(f" - {(X_train_spam[i][k-12])**2} A{k}")
+            A_counter = 23
+            for j in range(X_train.shape[1]-1):
+                for k in range(j+1, X_train.shape[1]):
+                    f.write(f" - {X_train_spam[i][j]*X_train_ham[i][k]} A{A_counter}")
+                    A_counter += 1
+            f.write(" + B >= 1\n")
+
+        # write bounds 
+        f.write("bounds\n")
+        for i in range(len(X_train_ham)):
+            f.write(f" Y{i+1} >= 0\n")
+        
+        for i in range(len(X_train_spam)):
+            f.write(f" Z{i+1} >= 0\n")
+
+
+        for i in range(77):
+            f.write(f" A{i+1} >= -Inf\n")
+
+        f.write(" B >= -Inf\n")
+        f.write("end")
+
+        
+
+        
+
+
+        
+
+
+
+
+
 # use gurobi to solve hyperplane
 def solve_hyperplane(lp_file_name):
     model = gp.read(lp_file_name)
@@ -249,7 +348,7 @@ def solve_hyperplane(lp_file_name):
 
 
 # make predictions
-def predict(X_test, optimal_values):
+def predict(X_test, optimal_values, hypersphere=False):
     A_values = [] 
     beta = optimal_values['B']
     for key, value in optimal_values.items():
@@ -257,6 +356,19 @@ def predict(X_test, optimal_values):
             A_values.append(value)
     
     A_val_array = np.array(A_values)
+
+    if hypersphere:
+        test_X = X_test.tolist()
+        for i in range(len(test_X)):
+            for j in range(len(test_X[i])):
+                test_X[i].append(test_X[i][j]**2)
+            for j in range(10):
+                for k in range(j+1, 11):
+                    test_X[i].append(test_X[i][j]*test_X[i][k])
+            print(len(test_X[i]))
+    
+        X_test = np.array(test_X)
+            
 
     predictions = []
     for vec in X_test:
@@ -267,6 +379,9 @@ def predict(X_test, optimal_values):
             predictions.append(-1)
 
     return predictions
+
+
+
 
 
 # calculate accuracy
@@ -302,6 +417,7 @@ def create_confusion_matrix_csv(predictions, y_test, output_filename):
         for i, actual_label in enumerate(labels):
             row_counts = [str(count) for count in matrix[i]]
             f.write(",".join(row_counts) + f",{actual_label}\n")
+            
 
 
 
@@ -320,7 +436,7 @@ if __name__ == "__main__":
     optimal_values = solve_hyperplane("hyperplane.lp")
     predictions = predict(X_test, optimal_values)
     accuracy = calculate_accuracy(predictions, y_test)
-    print(accuracy)
+    print(f"Accuracy of hyperplane: {accuracy}")
     create_confusion_matrix_csv(predictions, y_test, "results.csv")
 
    
@@ -339,4 +455,12 @@ if __name__ == "__main__":
         writer = csv.DictWriter(f, fieldnames=solution_vars)
         writer.writeheader()
         writer.writerows(solution_data)
+
+    create_hypersphere_file(X_train, y_train)
+
+    optimal_hypersphere = solve_hyperplane("hypersphere.lp")
+    hypersphere_predictions = predict(X_test, optimal_hypersphere, True)
+    hypersphere_accuracy = calculate_accuracy(hypersphere_predictions, y_test)
+    print(f"Hypersphere accuracy: {hypersphere_accuracy}")
+    create_confusion_matrix_csv(hypersphere_predictions, y_test, "hypersphere_results.csv")
 

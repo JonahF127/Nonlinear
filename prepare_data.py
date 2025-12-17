@@ -456,6 +456,8 @@ if __name__ == "__main__":
         writer.writeheader()
         writer.writerows(solution_data)
 
+    
+
     create_hypersphere_file(X_train, y_train)
 
     optimal_hypersphere = solve_hyperplane("hypersphere.lp")
@@ -463,4 +465,16 @@ if __name__ == "__main__":
     hypersphere_accuracy = calculate_accuracy(hypersphere_predictions, y_test)
     print(f"Hypersphere accuracy: {hypersphere_accuracy}")
     create_confusion_matrix_csv(hypersphere_predictions, y_test, "hypersphere_results.csv")
+
+    hypersphere_vars = []
+    for key in optimal_hypersphere:
+        if "A" in key or key == "B":
+            hypersphere_vars.append(key)
+
+    hypersphere_dict = {key: optimal_hypersphere[key] for key in hypersphere_vars}
+    hypersphere_data = [hypersphere_dict]
+    with open("hypersphere_solution.csv", mode = "w", newline = '') as f:
+        writer = csv.DictWriter(f, fieldnames=hypersphere_vars)
+        writer.writeheader()
+        writer.writerows(hypersphere_data)
 
